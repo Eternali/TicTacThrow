@@ -28,4 +28,8 @@ class Intents {
     state.value = Reducers.checkStatus(state.value);
   }
 
+  static Future changeSensitivity(AppStateObservable state, double newSens) async {
+    state.value = Reducers.changeSensitivity(state.value, newSens);
+  }
+
 }

@@ -7,6 +7,7 @@ import 'package:tictacthrow/data/provider.dart';
 import 'package:tictacthrow/data/reducers.dart';
 import 'package:tictacthrow/screens/home.dart';
 import 'package:tictacthrow/screens/login.dart';
+import 'package:tictacthrow/screens/settings.dart';
 
 void main() {
   runApp(TicTacThrow());
@@ -43,6 +44,7 @@ class _TicTacThrowState extends State<TicTacThrow> {
         routes: {
           Routes.home: (context) => Home(),
           Routes.login: (context) => Login(),
+          Routes.settings: (context) => Settings(),
         },
       ),
     );

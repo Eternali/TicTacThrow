@@ -11,13 +11,48 @@ class Cross extends StatefulWidget {
 
 class _CrossState extends State<Cross> with SingleTickerProviderStateMixin {
 
+  AnimationController _controller;
+  Animation<double> opAnim;
+  Animation<double> rotAnim;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(duration: Duration(milliseconds: 1000), vsync: this);
+    opAnim = Tween<double>(begin: 0.0, end: 1.0)
+      .animate(CurvedAnimation(
+        parent: _controller,
+        curve: Interval(0.0, 0.3, curve: Curves.easeOut),
+      ))
+      ..addListener(() {
+        setState(() {  });
+      });
+    rotAnim = Tween<double>(begin: 0.0, end: 1.0)
+      .animate(CurvedAnimation(
+        parent: _controller,
+        curve: Interval(0.2, 1.0, curve: Curves.easeInOut),
+      ))
+      ..addListener(() {
+        setState(() {  });
+      });
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final Widget shaft = Container(
       width: 96.0,
       height: 16.0,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.black.withAlpha((opAnim.value * 255).floor()),
         borderRadius: BorderRadius.circular(2.0),
       ),
     );
@@ -27,11 +62,11 @@ class _CrossState extends State<Cross> with SingleTickerProviderStateMixin {
         alignment: Alignment.center,
         children: <Widget>[
           Transform.rotate(
-            angle: pi / 4,
+            angle: rotAnim.value * (pi / 4),
             child: shaft,
           ),
           Transform.rotate(
-            angle: -pi / 4,
+            angle: rotAnim.value * (-pi / 4),
             child: shaft,
           ),
         ],

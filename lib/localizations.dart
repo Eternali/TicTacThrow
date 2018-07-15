@@ -10,6 +10,10 @@ class TTTLocalizations {
 
   String get appTitle => 'Tic Tac Throw';
   String get loginBtn => 'Login with';
+  String get reset => 'RESET';
+  String get start => 'START';
+  String get settings => 'Settings';
+  String get changeSensitivity => 'Adjust Sensitivity';
 
 }
 

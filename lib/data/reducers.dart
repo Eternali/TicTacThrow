@@ -36,4 +36,10 @@ class Reducers {
     );
   }
 
+  static AppState changeSensitivity(AppState old, double newSens) {
+    return old.copyWith(
+      sensitivity: newSens,
+    );
+  }
+
 }

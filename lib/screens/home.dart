@@ -11,6 +11,7 @@ import 'package:tictacthrow/data/models.dart';
 import 'package:tictacthrow/data/provider.dart';
 import 'package:tictacthrow/widgets/circle.dart';
 import 'package:tictacthrow/widgets/cross.dart';
+import 'package:tictacthrow/widgets/main_button.dart';
 
 List<T> flatten<T>(List<List<T>> deep) {
   var flattened = [];
@@ -28,21 +29,37 @@ class Home extends StatefulWidget {
 
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
-  // List<double> _accVals;
-  double threshold = 1.0;
+  AnimationController _controller;
+  Animation<double> completeAnim;
+
+  List<double> lastAcc = [0.0, 9.81, 0.0];
+  List<double> accDelta = [0.0, 0.0, 0.0];
   StreamSubscription<dynamic> _subscription;
 
   void startListening(BuildContext context) {
     _subscription = accelerometerEvents.listen((AccelerometerEvent event) {
-      if (event.x.abs() > threshold || event.y.abs() > threshold || event.z.abs() > threshold) {
-        // print(event.toString());
+      accDelta = [event.x - lastAcc[0], event.y - lastAcc[1], event.z - lastAcc[2]];
+      lastAcc = [event.x, event.y, event.z];
+      if (accDelta[0].abs() > Provider.of(context).value.sensitivity) {
         Intents.play(Provider.of(context), 1)
           .then((_) => Intents.checkStatus(Provider.of(context)));
+      } else if (accDelta[1].abs() > Provider.of(context).value.sensitivity) {
+        Intents.play(Provider.of(context), 2)
+          .then((_) => Intents.checkStatus(Provider.of(context)));
       }
-      // _accVals = <double>[event.x, event.y, event.z];
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: Duration(milliseconds: 1000), vsync: this);
+    completeAnim = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.bounceOut,
+    );
   }
 
   @override
@@ -58,11 +75,29 @@ class _HomeState extends State<Home> {
     final theme = Theme.of(context);
     final board = flatten(stateVal.board);
 
+    if (stateVal.status != 0 && _controller.status != AnimationStatus.completed) {
+      _controller.forward().orCancel;
+    } else if (_controller.status != AnimationStatus.dismissed) {
+      _controller.reverse().orCancel;
+    }
+
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text(
+          locales.appTitle,
+        ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () => Navigator.pushNamed(context, Routes.settings),
+          ),
+        ],
+      ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
           Stack(
             children: <Widget>[
               Center(
@@ -93,32 +128,30 @@ class _HomeState extends State<Home> {
                   ))).values.toList(),
                 ),
               ),
-              stateVal.status == 0 ? null :
-              Center(
-                child: Container(
-                  margin: EdgeInsets.only(top: 40.0),
-                  padding: EdgeInsets.all(100.0),
-                  child: Text(
-                    stateVal.status == 1
-                      ? "Player 1 WINS!"
-                      : "Player 2 WINS!",
-                    style: theme.textTheme.title,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withAlpha(140),
+              ScaleTransition(
+                scale: completeAnim,
+                child: stateVal.status == 0 ? null : Center(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 94.0),
+                    padding: EdgeInsets.all(100.0),
+                    child: Text(
+                      stateVal.status == 1
+                        ? '"O"s WIN!'
+                        : '"X"s WIN!',
+                      style: theme.textTheme.title,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.accentColor.withAlpha(140),
+                      borderRadius: BorderRadius.circular(48.0),
+                    ),
                   ),
                 ),
               ),
             ].where((v) => v != null).toList(),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 40.0, right: 40.0, top: 50.0),
-            child: RaisedButton(
-              onPressed: () => Intents.restart(Provider.of(context)),
-              child: Text(
-                'RESET'
-              ),
-            ),
+          MainButton(
+            onPressed: () => Intents.restart(Provider.of(context)),
+            text: board.where((square) => square != 0).length > 0 ? locales.reset : locales.start,
           ),
         ],
       ),
